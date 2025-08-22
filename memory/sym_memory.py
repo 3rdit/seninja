@@ -59,7 +59,7 @@ class Memory(MemoryAbstract):
 
     def __init__(self, state, page_size=0x1000, bits=64, symb_uninitialized=False):
         # page_size must be a power of 2
-        assert (page_size & (page_size - 1)) == 0
+        assert (page_size & (page_size - 1)) == 0, f"page_size must be power of 2, got 0x{page_size:x}"
         self.bits = bits
         self.state = state
         self.pages = dict()
@@ -82,8 +82,8 @@ class Memory(MemoryAbstract):
         return self.pages[page_addr].mo.bvarray.get_assertions()
 
     def mmap(self, address: int, size: int, init: InitData = None):
-        assert address % self.page_size == 0
-        assert size % self.page_size == 0
+        assert address % self.page_size == 0, f"mmap: address 0x{address:x} not aligned to page_size 0x{self.page_size:x}"
+        assert size % self.page_size == 0, f"mmap: size 0x{size:x} not multiple of page_size 0x{self.page_size:x}"
 
         init_val = None
         init_index = None
@@ -193,8 +193,8 @@ class Memory(MemoryAbstract):
                 max_addr_approx if max_addr is None else max_addr
             )
 
-        assert symb_access_mode == "limit_pages"
-        assert page_limit > 0
+        assert symb_access_mode == "limit_pages", f"symb_access_mode: expected 'limit_pages', got {repr(symb_access_mode)}"
+        assert page_limit > 0, f"page_limit must be > 0, got {page_limit}"
 
         if max_addr_approx - min_addr_approx == 2**self.state.arch.bits() - 1:
             # slow path. let's use the solver to validate
@@ -255,8 +255,8 @@ class Memory(MemoryAbstract):
         )
 
     def _store(self, page_address: int, page_index: BV, value: BV, condition: Bool = None):
-        assert page_address in self.pages
-        assert value.size == 8
+        assert page_address in self.pages, f"_store: page 0x{page_address:x} not mapped"
+        assert value.size == 8, f"_store: value size must be 8, got {value.size}"
 
         value = value.simplify()
         self.pages[page_address] = self.pages[page_address].store(
@@ -265,7 +265,7 @@ class Memory(MemoryAbstract):
     def store(self, address, value: BV, endness='big'):
         if isinstance(address, int):
             address = BVV(address, self.state.arch.bits())
-        assert address.size == self.bits
+        assert address.size == self.bits, f"store: address size must be {self.bits}, got {address.size}"
 
         for f in self.store_hooks:
             f(address, value.size)
@@ -329,13 +329,13 @@ class Memory(MemoryAbstract):
                 self.state.solver.add_constraints(Or(*conditions))
 
     def _load(self, page_address: int, page_index: BV):
-        assert page_address in self.pages
+        assert page_address in self.pages, f"_load: page 0x{page_address:x} not mapped"
         return self.pages[page_address].load(page_index)
 
     def load(self, address, size: int, endness='big'):
         if isinstance(address, int):
             address = BVV(address, self.state.arch.bits())
-        assert address.size == self.bits
+        assert address.size == self.bits, f"load: address size must be {self.bits}, got {address.size}"
 
         for f in self.load_hooks:
             f(address, size)
