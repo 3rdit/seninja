@@ -140,7 +140,7 @@ class SymbolicExecutor(object):
             name = var.name
             val = current_function.get_stack_contents_at(addr, offset, width)
             if val.type.value == RegisterValueType.StackFrameOffset:
-                assert width*8 == self.arch.bits()  # has to happen... right?
+                assert width*8 == self.arch.bits(), f"stack var width mismatch: {width*8} != {self.arch.bits()}"
                 self.state.mem.store(
                     BVV(stack_base + offset, self.arch.bits()),
                     BVV(stack_base + val.offset, width*8),
