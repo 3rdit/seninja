@@ -93,7 +93,5 @@ def find_os(view):
         return MacOS()
     elif platform_name == 'mac-x86_64':
         return MacOS()
-    elif platform_name == 'mac-x86':
-        return MacOS()
 
     raise UnsupportedOs(platform_name)

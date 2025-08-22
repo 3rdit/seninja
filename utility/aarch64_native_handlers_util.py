@@ -10,9 +10,9 @@ conds = {
 }
 
 shift_extend = {
-    'LSL', 'LSR', 'ASR', 'ROR',  # Shifts
-    'UXTB', 'UXTH', 'UXTW', 'UXTX',  # Unsigned extends
-    'SXTB', 'SXTH', 'SXTW', 'SXTX'   # Signed extends
+    'LSL', 'LSR', 'ASR', 'ROR',      # shifts
+    'UXTB', 'UXTH', 'UXTW', 'UXTX',  # unsigned extends
+    'SXTB', 'SXTH', 'SXTW', 'SXTX'   # signed extends
 }
 
 conds_regex = '|'.join(map(lambda x: x.lower(), conds))
@@ -20,11 +20,6 @@ shift_extend_regex = '|'.join(map(lambda x: x.lower(), shift_extend))
 
 
 def parse_mnemonic(instr):
-    """Parse AArch64 instruction mnemonic and condition code.
-    
-    In AArch64, condition codes are typically suffixed to the instruction.
-    Examples: b.eq, csel.ne, etc.
-    """
     regex_mnemonic = \
         r"^([a-z]+)" + \
         r"(?:\.({conds_regex}))?\b" \
@@ -41,10 +36,6 @@ def parse_mnemonic(instr):
 
 
 def parse_shift_extend(par):
-    """Parse AArch64 shift/extend operations with their amounts.
-    
-    Examples: lsl #2, uxtw #4, asr #0x10
-    """
     regex_shift_extend = r"({shift_extend_regex})\s*\#(0x[0-9a-fA-F]+|[0-9]+)".format(
         shift_extend_regex=shift_extend_regex
     )
@@ -59,10 +50,6 @@ def parse_shift_extend(par):
 
 
 def parse_immediate(par):
-    """Parse AArch64 immediate values.
-    
-    Supports both hexadecimal (#0x...) and decimal (#...) formats.
-    """
     regex_imm = r"\#(0x[0-9a-fA-F]+|[0-9]+)"
     tokens = re.match(regex_imm, par)
     assert tokens is not None  # parse failed
@@ -72,29 +59,13 @@ def parse_immediate(par):
 
 
 def get_src(state, param):
-    """Helper to get source value from register or immediate.
-    
-    Args:
-        state: Current execution state
-        param: Parameter string (register name or immediate value)
-        
-    Returns:
-        Value from register or parsed immediate
-    """
     if param.startswith('#'):
         return parse_immediate(param)
     else:
-        # Assume it's a register name
+        # assume it's a register name
         return state.regs[param]
 
 
 def store_to_dst(state, param, value):
-    """Helper to store value to destination register.
-    
-    Args:
-        state: Current execution state
-        param: Destination parameter (register name)
-        value: Value to store
-    """
-    # Store to register
+    # store to register
     state.regs[param] = value

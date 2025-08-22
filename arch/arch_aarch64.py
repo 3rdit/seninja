@@ -5,7 +5,7 @@ from .arch_aarch64_sph import AArch64SPH
 
 class AArch64Arch(Arch):
     REGS = {
-        # General-purpose registers x0-x30
+        # GPR
         'x0': {
             'size': 8,
             'sub': {
@@ -180,38 +180,34 @@ class AArch64Arch(Arch):
                 'w28': {'offset': 4, 'size': 4}
             }
         },
-        'fp': {  # Frame pointer (x29)
+        'fp': {
             'size': 8,
             'sub': {
                 'w29': {'offset': 4, 'size': 4}
             }
         },
-        'lr': {  # Link register (x30)
+        'lr': {
             'size': 8,
             'sub': {
                 'w30': {'offset': 4, 'size': 4}
             }
         },
-        # Stack pointer
         'sp': {
             'size': 8,
             'sub': {
                 'wsp': {'offset': 4, 'size': 4}
             }
         },
-        # Program counter
         'pc': {
             'size': 8,
             'sub': {}
         },
-        # Zero register
         'xzr': {
             'size': 8,
             'sub': {
                 'wzr': {'offset': 4, 'size': 4}
             }
         },
-        # SIMD/FP registers v0-v31
         'v0': {
             'size': 16,
             'sub': {
@@ -534,11 +530,10 @@ class AArch64Arch(Arch):
         }
     }
 
-    # Condition flags - N (negative), Z (zero), C (carry), V (overflow)
     FLAGS = {'n': 31, 'z': 30, 'c': 29, 'v': 28}
 
     REG_NAMES = [
-        "pc", "sp", "fp", "lr",  # Program counter, stack pointer, frame pointer, link register
+        "pc", "sp", "fp", "lr",
         "x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7", "x8", "x9", "x10", "x11",
         "x12", "x13", "x14", "x15", "x16", "x17", "x18", "x19", "x20", "x21", "x22",
         "x23", "x24", "x25", "x26", "x27", "x28", "xzr",
@@ -549,35 +544,35 @@ class AArch64Arch(Arch):
 
     # AArch64 condition codes
     FLAGS_CONDS = {
-        'EQ': lambda s: s.regs.flags['z'] == 1,  # Equal
-        'NE': lambda s: s.regs.flags['z'] == 0,  # Not equal
-        'CS': lambda s: s.regs.flags['c'] == 1,  # Carry set (unsigned higher or same)
-        'HS': lambda s: s.regs.flags['c'] == 1,  # Unsigned higher or same (alias for CS)
-        'CC': lambda s: s.regs.flags['c'] == 0,  # Carry clear (unsigned lower)
-        'LO': lambda s: s.regs.flags['c'] == 0,  # Unsigned lower (alias for CC)
-        'MI': lambda s: s.regs.flags['n'] == 1,  # Minus (negative)
-        'PL': lambda s: s.regs.flags['n'] == 0,  # Plus (positive or zero)
-        'VS': lambda s: s.regs.flags['v'] == 1,  # Overflow
-        'VC': lambda s: s.regs.flags['v'] == 0,  # No overflow
-        'HI': lambda s: And(                     # Unsigned higher
+        'EQ': lambda s: s.regs.flags['z'] == 1,  # equal
+        'NE': lambda s: s.regs.flags['z'] == 0,  # not equal
+        'CS': lambda s: s.regs.flags['c'] == 1,  # carry set (unsigned higher or same)
+        'HS': lambda s: s.regs.flags['c'] == 1,  # unsigned higher or same (alias for CS)
+        'CC': lambda s: s.regs.flags['c'] == 0,  # carry clear (unsigned lower)
+        'LO': lambda s: s.regs.flags['c'] == 0,  # unsigned lower (alias for CC)
+        'MI': lambda s: s.regs.flags['n'] == 1,  # minus (negative)
+        'PL': lambda s: s.regs.flags['n'] == 0,  # plus (positive or zero)
+        'VS': lambda s: s.regs.flags['v'] == 1,  # overflow
+        'VC': lambda s: s.regs.flags['v'] == 0,  # no overflow
+        'HI': lambda s: And(                     # unsigned higher
             s.regs.flags['c'] == 1,
             s.regs.flags['z'] == 0
         ),
-        'LS': lambda s: Or(                      # Unsigned lower or same
+        'LS': lambda s: Or(                      # unsigned lower or same
             s.regs.flags['c'] == 0,
             s.regs.flags['z'] == 1
         ),
-        'GE': lambda s: s.regs.flags['n'] == s.regs.flags['v'],  # Signed greater or equal
-        'LT': lambda s: s.regs.flags['n'] != s.regs.flags['v'],  # Signed less than
-        'GT': lambda s: And(                     # Signed greater than
+        'GE': lambda s: s.regs.flags['n'] == s.regs.flags['v'],  # signed greater or equal
+        'LT': lambda s: s.regs.flags['n'] != s.regs.flags['v'],  # signed less than
+        'GT': lambda s: And(                     # signed greater than
             s.regs.flags['z'] == 0,
             s.regs.flags['n'] == s.regs.flags['v']
         ),
-        'LE': lambda s: Or(                      # Signed less than or equal
+        'LE': lambda s: Or(                      # signed less than or equal
             s.regs.flags['z'] == 1,
             s.regs.flags['n'] != s.regs.flags['v']
         ),
-        'AL': lambda s: True                     # Always (unconditional)
+        'AL': lambda s: True                     # always (unconditional)
     }
 
     sph = AArch64SPH()
@@ -607,19 +602,18 @@ class AArch64Arch(Arch):
         return 'pc'
 
     def get_base_pointer_reg(self):
-        return 'fp'  # Frame pointer in AArch64
+        return 'fp'
 
     def get_stack_pointer_reg(self):
         return 'sp'
 
     def save_return_address(self, state, return_address):
-        state.regs.lr = return_address  # Link register
+        state.regs.lr = return_address
 
     def get_return_address(self, state):
         return state.regs.lr
 
     def get_argument_regs(self, calling_convention):
-        # Standard AArch64 calling convention uses x0-x7 for arguments
         return ['x0', 'x1', 'x2', 'x3', 'x4', 'x5', 'x6', 'x7']
 
     def save_result_value(self, state, calling_convention, value):
