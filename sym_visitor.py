@@ -795,6 +795,11 @@ class SymbolicVisitor(BNILVisitor):
         self.executor._wasjmp = True
         return True
 
+    def visit_LLIL_BOOL_TO_INT(self, expr):
+        bool_val = self.visit(expr.src)
+        size = expr.size * 8
+        return ITE(bool_val, BVV(1, size), BVV(0, size))
+
     def visit_LLIL_CMP_E(self, expr):
         left = self.visit(expr.left)
         right = self.visit(expr.right)
