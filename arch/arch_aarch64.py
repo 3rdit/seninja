@@ -642,5 +642,12 @@ class AArch64Arch(Arch):
         res = AArch64Arch.sph.handle_instruction(disasm_str, sv)
         return res
 
+    def is_synthetic_reg(self, reg_name):
+        # pc and xzr aren't queryable via binja
+        return reg_name in ['pc', 'xzr']
+
+    def is_zero_reg(self, reg_name):
+        return reg_name == 'xzr'
+
 
 Arch.fix_reg_addressess(AArch64Arch)

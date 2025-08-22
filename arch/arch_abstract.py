@@ -49,6 +49,12 @@ class Arch(object):  # abstract class
     def execute_special_handler(self, disasm_str, sv):
         raise NotImplementedError
 
+    def is_synthetic_reg(self, reg_name):
+        return False
+
+    def is_zero_reg(self, reg_name):
+        return False
+
     @staticmethod
     def fix_reg_addressess(obj):
         assert obj.REGS is not None

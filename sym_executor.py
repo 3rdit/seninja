@@ -107,6 +107,20 @@ class SymbolicExecutor(object):
         # initialize registers
         for reg in self.arch.regs_data():
             reg_dict = self.arch.regs_data()[reg]
+            
+            # skip synthetic registers (that can't be queried)
+            if self.arch.is_synthetic_reg(reg):
+                if self.arch.is_zero_reg(reg):
+                    # zero registers must always be zero
+                    setattr(self.state.regs, reg, BVV(0, reg_dict['size'] * 8))
+                elif not self.init_with_zero:
+                    symb = BVS(reg + "_init", reg_dict['size'] * 8)
+                    self.vars.add(symb)
+                    setattr(self.state.regs, reg, symb)
+                else:
+                    setattr(self.state.regs, reg, BVV(0, reg_dict['size'] * 8))
+                continue
+            
             val = current_function.get_reg_value_after(addr, reg)
 
             if val.type.value == RegisterValueType.StackFrameOffset:
