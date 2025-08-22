@@ -122,3 +122,29 @@ class LinuxArmV7(Linux):
     def merge(self, other, merge_condition: Bool):
         assert isinstance(other, LinuxArmV7)
         pass  # TODO implement this
+
+
+class LinuxAArch64(Linux):
+
+    SYSCALL_TABLE = {
+        63: models.read_handler,   # sys_read
+        64: models.write_handler,  # sys_write
+    }
+    SYSCALL_PARAMS = [
+        "x0", "x1", "x2", "x3", "x4", "x5", "x6", "x7"
+    ]
+
+    def get_syscall_n_reg(self):
+        return "x8"
+
+    def get_out_syscall_reg(self):
+        return "x0"
+
+    def copy(self):
+        res = LinuxAArch64()
+        super().copy_to(res)
+        return res
+
+    def merge(self, other, merge_condition: Bool):
+        assert isinstance(other, LinuxAArch64)
+        pass  # TODO implement this
