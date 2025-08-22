@@ -2,6 +2,7 @@ from binaryninja import (
     BinaryReader, BinaryWriter,
     RegisterValueType, enums
 )
+from binaryninja.lowlevelil import ILRegister
 from .sym_state import State
 from .arch.arch_x86 import x86Arch
 from .arch.arch_x86_64 import x8664Arch
@@ -15,7 +16,7 @@ from .utility.exceptions import (
     UnconstrainedIp, UnsatState, ExitException,
     UnimplementedModel, UnimplementedSyscall
 )
-from .expr import BV, BVV, BVS, Bool, BoolV, ITE
+from .expr import BV, BVV, BVS, Bool, BoolV, ITE, And, Or
 from .utility.bninja_util import (
     get_imported_functions_and_addresses,
     find_os,
@@ -33,6 +34,10 @@ class BNILVisitor(object):
         super(BNILVisitor, self).__init__()
 
     def visit(self, expression):
+        if isinstance(expression, ILRegister):
+            # direct register reference
+            return getattr(self.executor.state.regs, expression.name)
+        
         method_name = 'visit_{}'.format(expression.operation.name)
         if hasattr(self, method_name):
             value = getattr(self, method_name)(expression)
@@ -956,3 +961,51 @@ class SymbolicVisitor(BNILVisitor):
 
     def visit_LLIL_NORET(self, expr):
         raise ExitException()
+
+    def visit_LLIL_ASSERT(self, expr):
+        # add constraint from UIDF (user informed dataflow)
+        # https://docs.binary.ninja/dev/uidf.html
+        # https://api.binary.ninja/binaryninja.variable-module.html#binaryninja.variable.PossibleValueSet
+
+        reg_val = self.visit(expr.src)
+        constraint_set = expr.constraint
+        
+        # convert PossibleValueSet to symbolic constraints
+        
+        if constraint_set.type == RegisterValueType.ConstantValue:
+            # reg equals constant
+            self.executor.state.solver.add_constraints(reg_val == constraint_set.value)
+        
+        elif constraint_set.type == RegisterValueType.SignedRangeValue:
+            # reg is in signed range
+            range_constraints = []
+            for range_obj in constraint_set.ranges:
+                range_constraints.append(
+                    And(reg_val >= range_obj.start, reg_val <= range_obj.end)
+                )
+            if range_constraints:
+                self.executor.state.solver.add_constraints(Or(*range_constraints))
+        
+        elif constraint_set.type == RegisterValueType.UnsignedRangeValue:
+            # reg is in unsigned range
+            range_constraints = []
+            for range_obj in constraint_set.ranges:
+                range_constraints.append(
+                    And(reg_val.UGE(range_obj.start), reg_val.ULE(range_obj.end))
+                )
+            if range_constraints:
+                self.executor.state.solver.add_constraints(Or(*range_constraints))
+        
+        elif constraint_set.type == RegisterValueType.InSetOfValues:
+            # reg is one of these values
+            value_constraints = [reg_val == v for v in constraint_set.values]
+            if value_constraints:
+                self.executor.state.solver.add_constraints(Or(*value_constraints))
+        
+        elif constraint_set.type == RegisterValueType.NotInSetOfValues:
+            # reg is not one of these values
+            for v in constraint_set.values:
+                self.executor.state.solver.add_constraints(reg_val != v)
+        
+        # it can also be undetermined, so ignore that
+        return True
