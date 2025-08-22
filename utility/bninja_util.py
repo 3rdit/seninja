@@ -1,7 +1,8 @@
 from binaryninja import SymbolType
 from .exceptions import UnsupportedOs
-from ..os_models.linux import Linuxi386, Linuxia64, LinuxArmV7
+from ..os_models.linux import Linuxi386, Linuxia64, LinuxArmV7, LinuxAArch64
 from ..os_models.windows import Windows
+from ..os_models.macos import MacOS
 
 
 sticky_fun = None
@@ -82,9 +83,17 @@ def find_os(view):
         return Linuxi386()
     elif platform_name == 'linux-armv7':
         return LinuxArmV7()
+    elif platform_name == 'linux-aarch64':
+        return LinuxAArch64()
     elif platform_name == 'windows-x86':
         return Windows()
     elif platform_name == 'windows-x86_64':
         return Windows()
+    elif platform_name == 'mac-aarch64':
+        return MacOS()
+    elif platform_name == 'mac-x86_64':
+        return MacOS()
+    elif platform_name == 'mac-x86':
+        return MacOS()
 
     raise UnsupportedOs(platform_name)

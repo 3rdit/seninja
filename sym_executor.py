@@ -14,6 +14,7 @@ from .utility.expr_wrap_util import symbolic
 from .arch.arch_x86 import x86Arch
 from .arch.arch_x86_64 import x8664Arch
 from .arch.arch_armv7 import ArmV7Arch
+from .arch.arch_aarch64 import AArch64Arch
 from .utility import exceptions
 from .expr import BVV, BVS
 from .utility.binary_ninja_cache import BNCache
@@ -27,7 +28,9 @@ def find_arch(view):
         return x8664Arch()
     elif view.arch.name == "armv7":
         return ArmV7Arch()
-
+    elif view.arch.name == "aarch64":
+        return AArch64Arch()
+    
     raise exceptions.UnsupportedArch(view.arch.name)
 
 class SymbolicExecutor(object):
