@@ -798,6 +798,11 @@ class SymbolicVisitor(BNILVisitor):
     def visit_LLIL_BOOL_TO_INT(self, expr):
         bool_val = self.visit(expr.src)
         size = expr.size * 8
+        
+        # flags are 1-bit bitvectors, convert to bool for ITE
+        if isinstance(bool_val, BV) and bool_val.size == 1:
+            bool_val = bool_val == 1
+        
         return ITE(bool_val, BVV(1, size), BVV(0, size))
 
     def visit_LLIL_CMP_E(self, expr):
