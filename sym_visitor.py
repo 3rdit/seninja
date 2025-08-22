@@ -214,7 +214,7 @@ class SymbolicVisitor(BNILVisitor):
         left = self.visit(expr.left)
         right = self.visit(expr.right)
 
-        assert left.size == right.size
+        assert left.size == right.size, f"MULS_DP size mismatch: {left.size} != {right.size}"
         left = left.SignExt(left.size)
         right = right.SignExt(right.size)
         return left * right
@@ -223,7 +223,7 @@ class SymbolicVisitor(BNILVisitor):
         left = self.visit(expr.left)
         right = self.visit(expr.right)
 
-        assert left.size == right.size
+        assert left.size == right.size, f"MULU_DP size mismatch: {left.size} != {right.size}"
         left = left.ZeroExt(left.size)
         right = right.ZeroExt(right.size)
         return left * right
@@ -232,7 +232,7 @@ class SymbolicVisitor(BNILVisitor):
         left = self.visit(expr.left)
         right = self.visit(expr.right)
 
-        assert left.size == 2*right.size
+        assert left.size == 2*right.size, f"DIVU_DP size mismatch: {left.size} != 2*{right.size}"
 
         check_division_by_zero = self.executor.bncache.get_setting(
             "check_division_by_zero") == 'true'
@@ -261,7 +261,7 @@ class SymbolicVisitor(BNILVisitor):
         left = self.visit(expr.left)
         right = self.visit(expr.right)
 
-        assert left.size == 2*right.size
+        assert left.size == 2*right.size, f"DIVS_DP size mismatch: {left.size} != 2*{right.size}"
 
         check_division_by_zero = self.executor.bncache.get_setting(
             "check_division_by_zero") == 'true'
@@ -290,7 +290,7 @@ class SymbolicVisitor(BNILVisitor):
         left = self.visit(expr.left)
         right = self.visit(expr.right)
 
-        assert left.size == 2*right.size
+        assert left.size == 2*right.size, f"MODU_DP size mismatch: {left.size} != 2*{right.size}"
 
         check_division_by_zero = self.executor.bncache.get_setting(
             "check_division_by_zero") == 'true'
@@ -319,7 +319,7 @@ class SymbolicVisitor(BNILVisitor):
         left = self.visit(expr.left)
         right = self.visit(expr.right)
 
-        assert left.size == 2*right.size
+        assert left.size == 2*right.size, f"MODS_DP size mismatch: {left.size} != 2*{right.size}"
 
         check_division_by_zero = self.executor.bncache.get_setting(
             "check_division_by_zero") == 'true'
@@ -409,7 +409,7 @@ class SymbolicVisitor(BNILVisitor):
     def visit_LLIL_STORE(self, expr):
         dest = self.visit(expr.dest)
         src = self.visit(expr.src)
-        assert expr.size*8 == src.size
+        assert expr.size*8 == src.size, f"STORE size mismatch: {expr.size*8} != {src.size}"
 
         self.executor.state.mem.store(
             dest, src, endness=self.executor.arch.endness())
@@ -419,7 +419,7 @@ class SymbolicVisitor(BNILVisitor):
         left = self.visit(expr.left)
         right = self.visit(expr.right)
 
-        assert right.size <= left.size
+        assert right.size <= left.size, f"LSL size check: {right.size} > {left.size}"
 
         # the logical and arithmetic left-shifts are exactly the same
         return left << right.ZeroExt(left.size - right.size)
@@ -428,7 +428,7 @@ class SymbolicVisitor(BNILVisitor):
         left = self.visit(expr.left)
         right = self.visit(expr.right)
 
-        assert right.size <= left.size
+        assert right.size <= left.size, f"LSR size check: {right.size} > {left.size}"
 
         return left.LShR(
             right.ZeroExt(left.size - right.size)
@@ -438,7 +438,7 @@ class SymbolicVisitor(BNILVisitor):
         left = self.visit(expr.left)
         right = self.visit(expr.right)
 
-        assert right.size <= left.size
+        assert right.size <= left.size, f"ROR size check: {right.size} > {left.size}"
 
         return left.RotateRight(
             right.ZeroExt(left.size - right.size)
@@ -448,7 +448,7 @@ class SymbolicVisitor(BNILVisitor):
         left = self.visit(expr.left)
         right = self.visit(expr.right)
 
-        assert right.size <= left.size
+        assert right.size <= left.size, f"ROL size check: {right.size} > {left.size}"
 
         return left.RotateLeft(
             right.ZeroExt(left.size - right.size)
@@ -458,7 +458,7 @@ class SymbolicVisitor(BNILVisitor):
         left = self.visit(expr.left)
         right = self.visit(expr.right)
 
-        assert right.size <= left.size
+        assert right.size <= left.size, f"ASL size check: {right.size} > {left.size}"
 
         return left << right.ZeroExt(left.size - right.size)
 
@@ -466,7 +466,7 @@ class SymbolicVisitor(BNILVisitor):
         left = self.visit(expr.left)
         right = self.visit(expr.right)
 
-        assert right.size <= left.size
+        assert right.size <= left.size, f"ASR size check: {right.size} > {left.size}"
 
         return left >> right.ZeroExt(left.size - right.size)
 
@@ -519,7 +519,7 @@ class SymbolicVisitor(BNILVisitor):
             # retrive return address
             dest = self.executor.arch.get_return_address(self.executor.state)
             dest_fun_name = curr_fun_name
-            assert not symbolic(dest)  # cannot happen (right?)
+            assert not symbolic(dest), "symbolic return address"
 
         # check if imported
         elif dest.value in self.executor.imported_functions:
@@ -537,7 +537,7 @@ class SymbolicVisitor(BNILVisitor):
             # retrive return address
             dest = self.executor.arch.get_return_address(self.executor.state)
             dest_fun_name = curr_fun_name
-            assert not symbolic(dest)  # cannot happen (right?)
+            assert not symbolic(dest), "symbolic return address"
 
         # change ip
         self.executor.update_ip(dest_fun_name, self.executor.bncache.get_llil_address(
@@ -624,7 +624,7 @@ class SymbolicVisitor(BNILVisitor):
             self.executor._wasjmp = True
             return True
 
-        assert False  # implement this
+        assert False, "JUMP: unimplemented case"
 
     def visit_LLIL_JUMP_TO(self, expr):
         destination = self.visit(expr.dest)
@@ -710,7 +710,7 @@ class SymbolicVisitor(BNILVisitor):
         true_sat = True
         false_sat = True
         if isinstance(condition, BV):
-            assert condition.size == 1
+            assert condition.size == 1, f"IF: condition size must be 1, got {condition.size}"
             condition = condition == 1
 
         if isinstance(condition, BoolV):
@@ -931,7 +931,7 @@ class SymbolicVisitor(BNILVisitor):
         src = self.visit(expr.src)
         dest_size = expr.size * 8
 
-        assert src.size <= dest_size
+        assert src.size <= dest_size, f"SX size check: {src.size} > {dest_size}"
 
         return src.SignExt(dest_size - src.size)
 
@@ -939,14 +939,14 @@ class SymbolicVisitor(BNILVisitor):
         src = self.visit(expr.src)
         dest_size = expr.size * 8
 
-        assert src.size <= dest_size
+        assert src.size <= dest_size, f"ZX size check: {src.size} > {dest_size}"
 
         return src.ZeroExt(dest_size - src.size)
 
     def visit_LLIL_SYSCALL(self, expr):
         n_reg = self.executor.state.os.get_syscall_n_reg()
         n = getattr(self.executor.state.regs, n_reg)
-        assert not symbolic(n)
+        assert not symbolic(n), "SYSCALL: symbolic syscall number"
         n = n.value
 
         handler = self.executor.state.os.get_syscall_by_number(n)
