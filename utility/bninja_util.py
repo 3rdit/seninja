@@ -3,6 +3,7 @@ from .exceptions import UnsupportedOs
 from ..os_models.linux import Linuxi386, Linuxia64, LinuxArmV7, LinuxAArch64
 from ..os_models.windows import Windows
 from ..os_models.macos import MacOS
+from ..globals import logger
 
 
 sticky_fun = None
@@ -14,7 +15,7 @@ def get_function(view, address):
         funcs = view.get_functions_containing(address)
 
     if len(funcs) > 1:
-        print("WARNING: more than one function at {addr:x}".format(
+        logger.log_warn("WARNING: more than one function at {addr:x}".format(
             addr=address
         ))
         # Prefer the last translated function when there is an ambiguity.

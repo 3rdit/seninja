@@ -17,6 +17,7 @@ from .utility.exceptions import (
     UnimplementedModel, UnimplementedSyscall
 )
 from .expr import BV, BVV, BVS, Bool, BoolV, ITE, And, Or
+from .globals import logger
 from .utility.bninja_util import (
     get_imported_functions_and_addresses,
     find_os,
@@ -239,7 +240,7 @@ class SymbolicVisitor(BNILVisitor):
 
         right = right.ZeroExt(left.size - right.size)
         if check_division_by_zero and self.executor.state.solver.satisfiable(extra_constraints=[right == 0]):
-            print("WARNING: division by zero detected")
+            logger.log_warn("WARNING: division by zero detected")
             errored = self.executor.state.copy(solver_copy_fast=True)
             errored.solver.add_constraints(right == 0)
             self.executor.put_in_errored(
@@ -268,7 +269,7 @@ class SymbolicVisitor(BNILVisitor):
 
         right = right.SignExt(left.size - right.size)
         if check_division_by_zero and self.executor.state.solver.satisfiable(extra_constraints=[right == 0]):
-            print("WARNING: division by zero detected")
+            logger.log_warn("WARNING: division by zero detected")
             errored = self.executor.state.copy(solver_copy_fast=True)
             errored.solver.add_constraints(right == 0)
             self.executor.put_in_errored(
@@ -297,7 +298,7 @@ class SymbolicVisitor(BNILVisitor):
 
         right = right.ZeroExt(left.size - right.size)
         if check_division_by_zero and self.executor.state.solver.satisfiable(extra_constraints=[right == 0]):
-            print("WARNING: division by zero detected")
+            logger.log_warn("WARNING: division by zero detected")
             errored = self.executor.state.copy(solver_copy_fast=True)
             errored.solver.add_constraints(right == 0)
             self.executor.put_in_errored(
@@ -326,7 +327,7 @@ class SymbolicVisitor(BNILVisitor):
 
         right = right.SignExt(left.size - right.size)
         if check_division_by_zero and self.executor.state.solver.satisfiable(extra_constraints=[right == 0]):
-            print("WARNING: division by zero detected")
+            logger.log_warn("WARNING: division by zero detected")
             errored = self.executor.state.copy(solver_copy_fast=True)
             errored.solver.add_constraints(right == 0)
             self.executor.put_in_errored(

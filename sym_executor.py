@@ -20,6 +20,7 @@ from .expr import BVV, BVS
 from .utility.binary_ninja_cache import BNCache
 from .memory.sym_memory import InitData
 from .multipath.fringe import Fringe
+from .globals import logger
 
 def find_arch(view):
     if view.arch.name == "x86":
@@ -63,12 +64,12 @@ class SymbolicExecutor(object):
                            os=find_os(view), page_size=page_size)
 
         # load memory
-        print("loading segments...")
+        logger.log_info("loading segments...")
         for segment in self.view.segments:
             start = segment.start
             end = segment.end
             size = segment.data_length
-            print(segment, hex(start), "->", hex(size))
+            logger.log_info("%s %s -> %s" % (segment, hex(start), hex(size)))
 
             if size == 0 and end - start != 0:
                 size = end - start
@@ -85,7 +86,7 @@ class SymbolicExecutor(object):
                 self.state.address_page_aligned(start),
                 InitData(data, start - self.state.address_page_aligned(start))
             )
-        print("loading finished!")
+        logger.log_info("loading finished!")
 
         current_function = self.bncache.get_function(addr)
 
@@ -150,7 +151,7 @@ class SymbolicExecutor(object):
                 continue
 
             if abs(offset) > self.state.page_size * (stack_page_size - 1):
-                print("ERROR: not enough space in stack. Unable to add known variable to stack.")
+                logger.log_error("ERROR: not enough space in stack. Unable to add known variable to stack.")
                 continue
 
             width = s_type.width
@@ -333,7 +334,7 @@ class SymbolicExecutor(object):
                 self.put_in_exited(self.state)
                 self.state = None
             except exceptions.SENinjaError as err:
-                sys.stderr.write("An error occurred: %s\n" % err.message)
+                logger.log_error("An error occurred: %s" % err.message)
                 self.put_in_errored(self.state, str(err))
                 self.state = None
                 self._last_error = err
@@ -345,7 +346,7 @@ class SymbolicExecutor(object):
 
         if self.state is None:
             if self.fringe.is_empty():
-                print("WARNING: no more states")
+                logger.log_warn("WARNING: no more states")
                 return -1
             else:
                 self.select_from_deferred()
@@ -380,8 +381,8 @@ class SymbolicExecutor(object):
             import os
             _, _, exc_tb = sys.exc_info()
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            sys.stderr.write("Unknown exception in SymbolicExecutor.execute_one():\n")
-            sys.stderr.write(" ".join(map(str, ["\t", repr(e), fname, exc_tb.tb_lineno, "\n"])))
+            logger.log_error("Unknown exception in SymbolicExecutor.execute_one():")
+            logger.log_error(" ".join(map(str, ["\t", repr(e), fname, exc_tb.tb_lineno, "\n"])))
             self.put_in_errored(self.state, "Unknown error")
             self.state = None
             res = None

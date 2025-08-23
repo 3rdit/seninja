@@ -1,6 +1,7 @@
 from copy import deepcopy
 from .sym_flat_memory import MemoryConcreteFlat
 from ..expr import BVV, BVS, Bool, ITE
+from ..globals import logger
 
 
 class Regs(object):
@@ -56,7 +57,7 @@ class Regs(object):
         elif k in self._regs:
             reg_addr, reg_size = self._regs[k]
             if reg_size * 8 < val.size:
-                print("WARNING trimming value size in regs.setattr")
+                logger.log_warn("WARNING trimming value size in regs.setattr")
                 val = val.Extract(reg_size * 8 - 1, 0)
             self._mem.store(reg_addr, val, endness='big')
         elif "temp" in k:

@@ -6,6 +6,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QComboBox
 )
+from ..globals import logger
 from binaryninja.interaction import show_message_box
 from ..utility.string_util import str_to_bv, str_to_bv_list
 from ..expr import BVV, BV
@@ -127,7 +128,7 @@ class GetArgvDialog(QDialog):
 
         for i, arg in enumerate(args):
             if not isinstance(arg, BV):
-                sys.stderr.write("SENinja [error]: %s is not a BitVector\n" % str(arg))
+                logger.log_error("SENinja [error]: %s is not a BitVector" % str(arg))
                 return
             argv_el_p = BVV(state.mem.allocate(
                 arg.size // 8 + 1), state.arch.bits())
@@ -146,7 +147,7 @@ class GetArgvDialog(QDialog):
         elif isinstance(argc_loc, BV):
             state.mem.store(argc_loc, argc, state.arch.endness())
         else:
-            sys.stderr.write("SENinja [error]: invalid argc_loc %s" % str(argc_loc))
+            logger.log_error("SENinja [error]: invalid argc_loc %s" % str(argc_loc))
             return
 
         if argv_loc is None:
@@ -159,5 +160,5 @@ class GetArgvDialog(QDialog):
         elif isinstance(argv_loc, BV):
             state.mem.store(argv_loc, argv_p, state.arch.endness())
         else:
-            sys.stderr.write("SENinja [error]: invalid argv_loc %s" % str(argv_loc))
+            logger.log_error("SENinja [error]: invalid argv_loc %s" % str(argv_loc))
             return
