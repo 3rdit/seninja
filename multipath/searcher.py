@@ -1,5 +1,7 @@
 import traceback
 
+from ..globals import logger
+
 class Searcher(object):
     def __init__(self, executor):
         self.target = None
@@ -60,8 +62,8 @@ class DFSSearcher(Searcher):
             try:
                 self.executor.execute_one()
             except Exception as e:
-                print("!ERROR!:")
-                print(traceback.format_exc())
+                logger.log_error("!ERROR!:")
+                logger.log_error(traceback.format_exc())
                 break
 
             if step_callback is not None:
@@ -103,8 +105,8 @@ class BFSSearcher(Searcher):
             try:
                 self.executor.execute_one()
             except Exception as e:
-                print("!ERROR!:")
-                print(traceback.format_exc())
+                logger.log_error("!ERROR!:")
+                logger.log_error(traceback.format_exc())
                 return None
 
             if step_callback is not None:

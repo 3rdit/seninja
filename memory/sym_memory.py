@@ -6,6 +6,7 @@ from ..utility import exceptions
 from ..expr import BV, BVV, Bool, Or, ITE
 from .memory_object import MemoryObj
 from .memory_abstract import MemoryAbstract
+from ..globals import logger
 
 # bytes: byte array; index: int
 InitData = namedtuple('InitData', ['bytes', 'index'])
@@ -123,7 +124,7 @@ class Memory(MemoryAbstract):
                 self.pages[a] = Page(
                     a, self.page_size, self.index_bits, init_data)
             else:
-                print("remapping the same page '%s'" % hex(a))
+                logger.log_info("remapping the same page '%s'" % hex(a))
             i += 1
 
     def is_mapped(self, address: int):
@@ -136,7 +137,7 @@ class Memory(MemoryAbstract):
         if Memory.CHECK_SYMB_ADDR_WITH_SOLVER and not self.state.solver.symbolic(address):  # check with solver
             return self.state.solver.evaluate(address), None, None
 
-        print("WARNING: memory %s, symbolic memory access" % op_type)
+        logger.log_warn("WARNING: memory %s, symbolic memory access" % op_type)
         symb_access_mode = self.state.executor.bncache.get_setting(
             "memory.symb_address_mode")
         page_limit = int(self.state.executor.bncache.get_setting(
@@ -162,7 +163,7 @@ class Memory(MemoryAbstract):
 
                 if max_addr - min_addr == 2**self.state.arch.bits() - 1:
                     # unconstrained case
-                    print(
+                    logger.log_warn(
                         "WARNING: memory %s, concretizing mem access to a newly allocated address (\"concretize_unconstrained\" policy)" % op_type)
                     address_conc = self.get_unmapped(
                         size // self.page_size + 1, from_end=False) * self.page_size
@@ -173,12 +174,12 @@ class Memory(MemoryAbstract):
                     return address, min_addr, max_addr
 
         if symb_access_mode == "concretization":
-            print(
+            logger.log_warn(
                 "WARNING: memory %s, concretizing mem access (\"concretization\" policy)" % op_type)
             heuristic_base = heuristic_find_base(
                 address) if heuristic_base is None else heuristic_base
             if use_heuristic_find_base and heuristic_base != -1 and self.state.solver.satisfiable([address == heuristic_base]):
-                print("WARNING: memory %s, heuristic address 0x%x" %
+                logger.log_warn("WARNING: memory %s, heuristic address 0x%x" %
                       (op_type, heuristic_base))
                 address_conc = BVV(heuristic_base, address.size)
             else:
@@ -203,7 +204,7 @@ class Memory(MemoryAbstract):
             max_addr = self.state.solver.max(
                 address) if max_addr is None else max_addr
             if max_addr - min_addr > page_limit * self.page_size:
-                print(
+                logger.log_warn(
                     "WARNING: memory %s, limiting memory access (\"limit_pages\" policy)" % op_type)
 
                 min_addr_page = min_addr >> self.index_bits
@@ -221,7 +222,7 @@ class Memory(MemoryAbstract):
                     heuristic_base_page <= max_addr_page - page_limit and
                     self.state.solver.satisfiable([address == heuristic_base])
                 ):
-                    print("WARNING: memory %s, heuristic address 0x%x" %
+                    logger.log_warn("WARNING: memory %s, heuristic address 0x%x" %
                           (op_type, heuristic_base))
                     pivot = heuristic_base_page
                 else:
@@ -232,7 +233,7 @@ class Memory(MemoryAbstract):
                     if pages_in_range:
                         pivot = min(pages_in_range)
                     else:
-                        print(
+                        logger.log_warn(
                             "WARNING: memory %s, allocating pages (\"limit_pages\" policy)" % op_type)
                         pivot = self.get_unmapped(
                             self.page_size * page_limit, from_end=False)

@@ -1,6 +1,7 @@
 import z3
 
 from .arch_abstract import Arch
+from ..globals import logger
 from .arch_x86_sph import ArchX86SPH
 
 
@@ -176,7 +177,7 @@ class x86Arch(Arch):
         if calling_convention == 'regparm':
             return ["eax", "edx", "ecx"]
 
-        print("!Err: unexpected calling convention", calling_convention)
+        logger.log_error("!Err: unexpected calling convention %s" % calling_convention)
         return []
 
     def get_flag_cond_lambda(self, cond: str):

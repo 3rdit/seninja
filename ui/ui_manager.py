@@ -5,7 +5,6 @@ import sys
 from binaryninja.interaction import get_choice_input
 from binaryninja import (
     enums,
-    log_alert,
     BackgroundTaskThread,
 )
 from binaryninjaui import UIContext
@@ -16,6 +15,7 @@ from ..utility.bninja_util import get_address_after_merge
 from ..utility.exceptions import SENinjaError
 from ..sym_executor import SymbolicExecutor
 from ..multipath import searcher
+from ..globals import logger
 
 class UIBackgroundTask(BackgroundTaskThread):
     def __init__(self, bv, msg, callback):
@@ -108,7 +108,7 @@ class UIManager(object):
     def symbolic_started(self):
         if self.executor is not None:
             return True
-        log_alert("SENinja not running")
+        logger.log_info("SENinja not running")
         return False
 
     def reset_state_history_highlight(self):
@@ -182,14 +182,14 @@ class UIManager(object):
     @locked
     def start_se(self):
         if self.executor is not None:
-            log_alert("SENinja already started")
+            logger.log_info("SENinja already started")
             return
 
         address = self.bv.file.offset
         try:
             self.executor = SymbolicExecutor(self.bv, address)
         except SENinjaError as e:
-            sys.stderr.write(e.message + "\n")
+            logger.log_error(e.message)
             return
         self.dfs_searcher = searcher.DFSSearcher(self.executor)
         self.bfs_searcher = searcher.BFSSearcher(self.executor)
@@ -260,7 +260,7 @@ class UIManager(object):
             return
 
         if not self.dfs_searcher.ready_to_run():
-            log_alert("SENinja: no target set for searcher")
+            logger.log_info("SENinja: no target set for searcher")
             return
 
         timeout = self.executor.bncache.get_setting("exploration_timeout")
@@ -273,7 +273,7 @@ class UIManager(object):
                     return False
                 tb.progress = "SENinja: running DFS @ %s" % hex(s.get_ip())
                 if timeout > 0 and time.time() - start > timeout:
-                    sys.stderr.write("SENinja: Timeout elapsed (%d sec)\n" % timeout)
+                    logger.log_error("SENinja: Timeout elapsed (%d sec)" % timeout)
                     return False
                 if self.stop:
                     self.stop = False
@@ -297,7 +297,7 @@ class UIManager(object):
             return
 
         if not self.bfs_searcher.ready_to_run():
-            log_alert("SENinja: no target set for searcher")
+            logger.log_info("SENinja: no target set for searcher")
             return
 
         timeout = self.executor.bncache.get_setting("exploration_timeout")
@@ -310,7 +310,7 @@ class UIManager(object):
                     return False
                 tb.progress = "SENinja: running BFS @ %s" % hex(s.get_ip())
                 if timeout > 0 and time.time() - start > timeout:
-                    sys.stderr.write("SENinja: Timeout elapsed (%d sec)\n" % timeout)
+                    logger.log_error("SENinja: Timeout elapsed (%d sec)" % timeout)
                     return False
                 if self.stop:
                     self.stop = False
@@ -366,7 +366,7 @@ class UIManager(object):
 
                 if timeout > 0 and time.time() - start > timeout:
                     # Timeout elapsed
-                    sys.stderr.write("SENinja: Timeout elapsed (%d sec)\n" % timeout)
+                    logger.log_error("SENinja: Timeout elapsed (%d sec)" % timeout)
                     break
 
                 i = len(self.executor.fringe.deferred)
@@ -410,7 +410,7 @@ class UIManager(object):
 
                 if timeout > 0 and time.time() - start > timeout:
                     # Timeout elapsed
-                    sys.stderr.write("SENinja: Timeout elapsed (%d sec)\n" % timeout)
+                    logger.log_error("SENinja: Timeout elapsed (%d sec)" % timeout)
                     break
 
                 ip = self.executor.state.get_ip()
@@ -438,20 +438,20 @@ class UIManager(object):
             return
 
         if self.executor.state.get_ip() != address:
-            log_alert("SENinja: current state is not at this address")
+            logger.log_info("SENinja: current state is not at this address")
             return
 
         to_be_merged_all = self.executor.fringe.get_all_deferred_by_address(
             address)
         if to_be_merged_all is None:
-            log_alert("SENinja: no deferred state at this address")
+            logger.log_info("SENinja: no deferred state at this address")
             return
 
         mergeable, not_mergeable = self.executor.extract_mergeable_with_current_state(
             to_be_merged_all)
         if len(not_mergeable) > 0:
-            sys.stderr.write(
-                "SENinja [warning]: %d states was not merged since they deviate from the current state after executing the current instruction\n" % len(not_mergeable))
+            logger.log_error(
+                "SENinja [warning]: %d states was not merged since they deviate from the current state after executing the current instruction" % len(not_mergeable))
             self.executor.fringe._deferred[address] = not_mergeable
 
         if len(mergeable) == 0:
@@ -484,7 +484,7 @@ class UIManager(object):
 
         states = self.executor.fringe.get_list_deferred_by_address(address)
         if len(states) == 0:
-            log_alert("SENinja: no such deferred state")
+            logger.log_info("SENinja: no such deferred state")
             return
         if len(states) == 1:
             state = self.executor.fringe.get_deferred_by_address(address)
