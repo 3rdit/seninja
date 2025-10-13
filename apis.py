@@ -19,12 +19,13 @@ from .utility.string_util import (
 )
 from .utility.expr_wrap_util import split_bv_in_list
 from .utility.bninja_util import get_address_after_merge
-from .globals import Globals
+from .globals import uimanager_registry
 
 def get_current_state():
-    if not Globals.uimanager.symbolic_started():
+    uimanager = uimanager_registry.get_active()
+    if not uimanager or not uimanager.symbolic_started():
         return None
-    return Globals.uimanager.executor.state
+    return uimanager.executor.state
 
 def constraint_bv(bv_list: list, pattern: str):
     state = get_current_state()
@@ -67,18 +68,21 @@ def get_stdout_bv(state):
     return r
 
 def register_hook(address, func):
-    if not Globals.uimanager.symbolic_started():
+    uimanager = uimanager_registry.get_active()
+    if not uimanager or not uimanager.symbolic_started():
         return
-    Globals.uimanager.executor.user_hooks[address] = func
+    uimanager.executor.user_hooks[address] = func
 
 
 def register_logger(address, func):
-    if not Globals.uimanager.symbolic_started():
+    uimanager = uimanager_registry.get_active()
+    if not uimanager or not uimanager.symbolic_started():
         return
-    Globals.uimanager.executor.user_loggers[address] = func
+    uimanager.executor.user_loggers[address] = func
 
 
 def reload_settings():
-    if not Globals.uimanager.symbolic_started():
+    uimanager = uimanager_registry.get_active()
+    if not uimanager or not uimanager.symbolic_started():
         return
-    Globals.uimanager.executor.bncache.settings = {}
+    uimanager.executor.bncache.settings = {}

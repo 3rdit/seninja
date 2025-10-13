@@ -350,7 +350,7 @@ class BufferView(QWidget):
 
     def notifytab(self, newName):
         if newName != self.tabname:
-            if self.tabname != "":
+            if self.tabname is not None:
                 gBuffersPerTab[self.tabname] = self.data
                 self.stateReset()
 

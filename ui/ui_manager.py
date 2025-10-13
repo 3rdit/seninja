@@ -29,30 +29,25 @@ class UIBackgroundTask(BackgroundTaskThread):
         self.callback(self)
 
 class UIManager(object):
-    TARGET_TAG_TYPE = None
-    AVOID_TAG_TYPE = None
-
     NO_COLOR = enums.HighlightStandardColor(0)
     CURR_STATE_COLOR = enums.HighlightStandardColor.GreenHighlightColor
     DEFERRED_STATE_COLOR = enums.HighlightStandardColor.RedHighlightColor
     ERRORED_STATE_COLOR = enums.HighlightStandardColor.BlackHighlightColor
     HIGHLIGHTED_HISTORY_COLOR = enums.HighlightStandardColor.YellowHighlightColor
 
-    @staticmethod
-    def get_target_tt(bv):
-        if UIManager.TARGET_TAG_TYPE is not None:
-            return UIManager.TARGET_TAG_TYPE
-        UIManager.TARGET_TAG_TYPE = "SENinja Target"
-        bv.create_tag_type(UIManager.TARGET_TAG_TYPE, "O")
-        return UIManager.TARGET_TAG_TYPE
+    def get_target_tt(self, bv):
+        if self._target_tag_type is not None:
+            return self._target_tag_type
+        self._target_tag_type = "SENinja Target"
+        bv.create_tag_type(self._target_tag_type, "O")
+        return self._target_tag_type
 
-    @staticmethod
-    def get_avoid_tt(bv):
-        if UIManager.AVOID_TAG_TYPE is not None:
-            return UIManager.AVOID_TAG_TYPE
-        UIManager.AVOID_TAG_TYPE = "SENinja Avoid"
-        bv.create_tag_type(UIManager.AVOID_TAG_TYPE, "X")
-        return UIManager.AVOID_TAG_TYPE
+    def get_avoid_tt(self, bv):
+        if self._avoid_tag_type is not None:
+            return self._avoid_tag_type
+        self._avoid_tag_type = "SENinja Avoid"
+        bv.create_tag_type(self._avoid_tag_type, "X")
+        return self._avoid_tag_type
 
     @property
     def bv(self):
@@ -104,6 +99,9 @@ class UIManager(object):
         self.stop          = False
 
         self.highlighted_state_history = list()
+
+        self._target_tag_type = None
+        self._avoid_tag_type = None
 
     def symbolic_started(self):
         if self.executor is not None:
@@ -208,7 +206,7 @@ class UIManager(object):
             func.remove_auto_address_tags_of_type(address, self.searcher_tags[address][0])
             del self.searcher_tags[address]
 
-        tt = UIManager.get_target_tt(self.bv)
+        tt = self.get_target_tt(self.bv)
         func.add_tag(tt, "SENINJA: target address", address, True)
         self.searcher_tags[address] = (tt, func)
         if address in self.dfs_searcher.avoid:
@@ -229,7 +227,7 @@ class UIManager(object):
             func.remove_auto_address_tags_of_type(address, self.searcher_tags[address])
             del self.searcher_tags[address]
 
-        tt = UIManager.get_avoid_tt(self.bv)
+        tt = self.get_avoid_tt(self.bv)
         func.add_tag(tt, "SENINJA: avoid address", address, True)
         self.searcher_tags[address] = (tt, func)
         if address == self.dfs_searcher.target:
@@ -558,6 +556,8 @@ class UIManager(object):
             self._set_colors(reset=True)
             self._bv = None
             self.executor = None
+            self.dfs_searcher = None
+            self.bfs_searcher = None
             self.running = False
             self.widget.enableAll()
 

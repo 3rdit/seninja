@@ -27,41 +27,39 @@ from .apis import (
     reload_settings
 )
 
-from .globals import Globals
+from .globals import uimanager_registry
 from .ui.ui_manager import UIManager
 from .ui.seninja_widget import SENinjaWidgetType
-
-Globals.uimanager = UIManager()
 
 Sidebar.addSidebarWidgetType(SENinjaWidgetType())
 
 PluginCommand.register(
     "SENinja\\Setup argv...",
     "Setup argv for the current function",
-    lambda bv: Globals.uimanager.launch_argv_dialog()
+    lambda bv: uimanager_registry.get_or_create(bv.file.session_id).launch_argv_dialog() if bv.file else None
 )
 PluginCommand.register_for_address(
     "SENinja\\Select state",
     "Select the state at the current address",
-    lambda bv, addr: Globals.uimanager.async_change_current_state(addr)
+    lambda bv, addr: uimanager_registry.get_or_create(bv.file.session_id).async_change_current_state(addr) if bv.file else None
 )
 PluginCommand.register_for_address(
     "SENinja\\Set ip",
     "Set the instruction pointer of the current state to the selected address",
-    lambda bv, addr: Globals.uimanager.async_change_active_state_ip(addr)
+    lambda bv, addr: uimanager_registry.get_or_create(bv.file.session_id).async_change_active_state_ip(addr) if bv.file else None
 )
 PluginCommand.register_for_address(
     "SENinja\\Merge states",
     "Merge all the states at the current address",
-    lambda bv, addr: Globals.uimanager.async_merge_states(addr)
+    lambda bv, addr: uimanager_registry.get_or_create(bv.file.session_id).async_merge_states(addr) if bv.file else None
 )
 PluginCommand.register_for_address(
     "SENinja\\Mark as address to reach",
     "Set the destination address",
-    lambda bv, addr: Globals.uimanager.set_run_target(addr)
+    lambda bv, addr: uimanager_registry.get_or_create(bv.file.session_id).set_run_target(addr) if bv.file else None
 )
 PluginCommand.register_for_address(
     "SENinja\\Mark as address to avoid",
     "Set the avoid address",
-    lambda bv, addr: Globals.uimanager.set_run_avoid(addr)
+    lambda bv, addr: uimanager_registry.get_or_create(bv.file.session_id).set_run_avoid(addr) if bv.file else None
 )

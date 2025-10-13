@@ -304,7 +304,7 @@ class MemoryView(QWidget):
 
     def notifytab(self, newName):
         if newName != self.tabname:
-            if self.tabname != "":
+            if self.tabname is not None:
                 self.data.regions = None
                 gMemPerTab[self.tabname] = self.data
                 self.stateReset()
