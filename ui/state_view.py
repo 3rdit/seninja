@@ -12,8 +12,6 @@ from PySide6.QtWidgets import (
     QTableWidgetItem,
 )
 
-from ..globals import Globals
-
 gStatesPerTab = {}
 
 def _makewidget(parent, val, center=False):
@@ -38,6 +36,7 @@ class StateView(QWidget):
         self.parent = parent
         self.tabname = ""
         self.data = StateViewData()
+        self._uimanager = None
 
         # Set up register table
         self.table = QTableWidget()
@@ -75,7 +74,13 @@ class StateView(QWidget):
         self.data.current_state = state
         self._init_internal()
 
+    def set_uimanager(self, uimanager):
+        self._uimanager = uimanager
+
     def set_state_table(self, state):
+        if not self._uimanager or not self._uimanager.executor:
+            return
+
         STATE_ACTIVE = 0
         STATE_DEFERRED = 1
         STATE_UNSAT = 2
@@ -83,12 +88,12 @@ class StateView(QWidget):
         STATE_AVOIDED = 4
         STATE_EXITED = 5
         self.data.state_collection.clear()
-        
-        deferred_states = Globals.uimanager.executor.fringe.deferred
-        unsat_states = Globals.uimanager.executor.fringe.get_unsat_states
-        error_states = Globals.uimanager.executor.fringe.get_error_states
-        avoided_states = Globals.uimanager.executor.fringe.get_avoided_states
-        exited_states = Globals.uimanager.executor.fringe.get_exited_states
+
+        deferred_states = self._uimanager.executor.fringe.deferred
+        unsat_states = self._uimanager.executor.fringe.get_unsat_states
+        error_states = self._uimanager.executor.fringe.get_error_states
+        avoided_states = self._uimanager.executor.fringe.get_avoided_states
+        exited_states = self._uimanager.executor.fringe.get_exited_states
 
         rowCount = len(deferred_states)+len(unsat_states)+len(error_states)+len(avoided_states)+len(exited_states)
         if state:
@@ -151,7 +156,8 @@ class StateView(QWidget):
         if row_idx == self.data.active_idx:
             return
         state_addr = self.data.index_to_state_address[row_idx]
-        Globals.uimanager.async_change_current_state(state_addr)
+        if self._uimanager:
+            self._uimanager.async_change_current_state(state_addr)
 
     def notifyOffsetChanged(self, offset):
         pass
@@ -163,7 +169,7 @@ class StateView(QWidget):
 
     def notifytab(self, newName):
         if newName != self.tabname:
-            if self.tabname != "":
+            if self.tabname is not None:
                 gStatesPerTab[self.tabname] = self.data
                 self.stateReset()
 

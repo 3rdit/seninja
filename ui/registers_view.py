@@ -292,7 +292,7 @@ class RegisterWidget(QWidget):
 
     def notifytab(self, newName):
         if newName != self.tabname:
-            if self.tabname != "":
+            if self.tabname is not None:
                 gRegsPerTab[self.tabname] = self.data
                 self.stateReset()
 

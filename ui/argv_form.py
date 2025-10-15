@@ -6,11 +6,10 @@ from PySide6.QtWidgets import (
     QLabel,
     QComboBox
 )
-from ..globals import logger
+from ..globals import logger, uimanager_registry
 from binaryninja.interaction import show_message_box
 from ..utility.string_util import str_to_bv, str_to_bv_list
 from ..expr import BVV, BV
-from ..globals import Globals
 
 import sys
 
@@ -117,8 +116,13 @@ class GetArgvDialog(QDialog):
 
     @staticmethod
     def setup_argv(*args, argc_loc=None, argv_loc=None):
-        filename = Globals.uimanager.executor.view.file.filename
-        state = Globals.uimanager.executor.state
+        uimanager = uimanager_registry.get_active()
+        if not uimanager or not uimanager.executor:
+            logger.log_error("SENinja [error]: No active symbolic execution")
+            return
+
+        filename = uimanager.executor.view.file.filename
+        state = uimanager.executor.state
         argv_p = BVV(state.mem.allocate((len(args) + 1) *
                                         (state.arch.bits() // 8)), state.arch.bits())
         argv_1_p = BVV(state.mem.allocate(len(filename)), state.arch.bits())
@@ -138,8 +142,8 @@ class GetArgvDialog(QDialog):
 
         argc = BVV(len(args) + 1, state.arch.bits())
         if argc_loc is None:
-            current_function = Globals.uimanager.executor.bncache.get_function(
-                Globals.uimanager.executor.ip)
+            current_function = uimanager.executor.bncache.get_function(
+                uimanager.executor.ip)
             argc_loc = current_function.calling_convention.int_arg_regs[0]
 
         if isinstance(argc_loc, str):
@@ -151,8 +155,8 @@ class GetArgvDialog(QDialog):
             return
 
         if argv_loc is None:
-            current_function = Globals.uimanager.executor.bncache.get_function(
-                Globals.uimanager.executor.ip)
+            current_function = uimanager.executor.bncache.get_function(
+                uimanager.executor.ip)
             argv_loc = current_function.calling_convention.int_arg_regs[1]
 
         if isinstance(argv_loc, str):

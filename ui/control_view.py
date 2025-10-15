@@ -12,8 +12,6 @@ from PySide6.QtWidgets import (
     QToolButton
 )
 
-from ..globals import Globals
-
 def load_icon(fname_icon):
     path_this_file = os.path.abspath(__file__)
     path_this_dir = os.path.dirname(path_this_file)
@@ -33,6 +31,7 @@ class ControlView(QWidget):
     def __init__(self, parent):
         QWidget.__init__(self, parent)
         self.parent = parent
+        self._uimanager = None
 
         self.toolbar = QToolBar(self, parent)
         self.toolbar.setStyleSheet("QToolBar{spacing:0px;}")
@@ -200,39 +199,52 @@ class ControlView(QWidget):
     def notifytab(self, newName):
         pass
 
+    def set_uimanager(self, uimanager):
+        self._uimanager = uimanager
+
     def set_target(self):
-        Globals.uimanager.set_run_target(Globals.uimanager.bv.file.offset)
+        if self._uimanager:
+            self._uimanager.set_run_target(self._uimanager.bv.file.offset)
 
     def set_avoid(self):
-        Globals.uimanager.set_run_avoid(Globals.uimanager.bv.file.offset)
+        if self._uimanager:
+            self._uimanager.set_run_avoid(self._uimanager.bv.file.offset)
 
     def reset_searchers(self):
-        Globals.uimanager.reset_searchers()
+        if self._uimanager:
+            self._uimanager.reset_searchers()
 
     def perform_start(self):
-        Globals.uimanager.start_se()
+        if self._uimanager:
+            self._uimanager.start_se()
 
     def perform_step(self):
-        Globals.uimanager.async_step()
+        if self._uimanager:
+            self._uimanager.async_step()
 
     def perform_dfs(self):
-        Globals.uimanager.async_run_dfs_searcher()
+        if self._uimanager:
+            self._uimanager.async_run_dfs_searcher()
 
     def perform_bfs(self):
-        Globals.uimanager.async_run_bfs_searcher()
+        if self._uimanager:
+            self._uimanager.async_run_bfs_searcher()
 
     def perform_run_until_branch(self):
-        Globals.uimanager.async_continue_until_branch()
+        if self._uimanager:
+            self._uimanager.async_continue_until_branch()
 
     def perform_run_until_addr(self):
-        Globals.uimanager.async_continue_until_address(Globals.uimanager.bv.file.offset)
+        if self._uimanager:
+            self._uimanager.async_continue_until_address(self._uimanager.bv.file.offset)
 
     def perform_stop(self):
-        if Globals.uimanager.running:
-            Globals.uimanager.stop = True
+        if self._uimanager and self._uimanager.running:
+            self._uimanager.stop = True
 
     def perform_reset(self):
-        Globals.uimanager.async_reset_se()
+        if self._uimanager:
+            self._uimanager.async_reset_se()
 
     def notifyOffsetChanged(self, offset):
         pass

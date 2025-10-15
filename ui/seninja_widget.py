@@ -26,6 +26,7 @@ from .control_view import ControlView
 from .state_view import StateView
 from .buffer_view import BufferView
 from .memory_view import MemoryView
+from ..globals import uimanager_registry
 
 import os
 
@@ -57,6 +58,9 @@ class SENinjaWidget(SidebarWidget):
         self.updateStateSignal.connect(self.stateUpdate)
         self.initSignal.connect(self.stateInit)
         self.resetSignal.connect(self.stateReset)
+
+        self._current_bv = None
+        self._current_uimanager = None
 
         self.tabs = QTabWidget(frame)
         self.regs = RegisterWidget(frame)
@@ -104,7 +108,22 @@ class SENinjaWidget(SidebarWidget):
         self.mem.stateReset()
 
     def notifyViewChanged(self, view_frame):
-        newName = view_frame.getTabName() if view_frame is not None else ""
+        newName = None
+        self._current_bv = None
+        self._current_uimanager = None
+
+        if view_frame is not None:
+            view_interface = view_frame.getCurrentViewInterface()
+            if view_interface is not None:
+                bv = view_interface.getData()
+                if bv and bv.file:
+                    newName = bv.file.session_id
+                    self._current_bv = bv
+                    self._current_uimanager = uimanager_registry.get_or_create(newName)
+
+        self.controls.set_uimanager(self._current_uimanager)
+        self.states.set_uimanager(self._current_uimanager)
+
         self.regs.notifytab(newName)
         self.states.notifytab(newName)
         self.buffers.notifytab(newName)
